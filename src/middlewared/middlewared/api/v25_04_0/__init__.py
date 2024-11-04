@@ -1,5 +1,6 @@
 from .acme_protocol import *  # noqa
 from .acl import * # noqa
+from .activedirectory import *  # noqa
 from .alert import *  # noqa
 from .alertservice import *  # noqa
 from .api_key import *  # noqa
@@ -16,6 +17,9 @@ from .fcport import *  # noqa
 from .filesystem import *  # noqa
 from .group import *  # noqa
 from .iscsi_auth import *  # noqa
+from .kerberos import *  # noqa
+from .kerberos_keytab import *  # noqa
+from .kerberos_realm import *  # noqa
 from .keychain import *  # noqa
 from .privilege import *  # noqa
 from .rdma import *  # noqa
