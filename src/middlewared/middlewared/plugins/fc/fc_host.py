@@ -237,7 +237,7 @@ class FCHostService(CRUDService):
                                 )
                                 break
                     else:
-                        self.logger.warning('Cannot not check NPIV usage: %r', id_)
+                        self.logger.warning('Cannot check NPIV usage: %r', id_)
 
         verrors.check()
 
