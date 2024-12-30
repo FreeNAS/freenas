@@ -325,7 +325,10 @@ tests = ['api2/test_001_ssh.py',
          'api2/test_003_network_global.py',
          'api2/test_005_interface.py',
          'api2/test_006_pool_and_sysds.py',
+         'api2/test_007_early_settings.py',
          'api2/test_009_fenced.py',
+         'api2/test_011_user.py',
+         'api2/test_012_directory_service_ssh.py',
          'api2/test_014_failover_related.py',
          'api2/test_fibre_channel.py']
 
