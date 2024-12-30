@@ -76,10 +76,11 @@ class FCHostService(CRUDService):
         """
         old = await self.get_instance(id_)
         audit_callback(old['alias'])
-        new = old.copy()
-        new.update(data)
 
         await self._validate("fc_host_update", data, id_, old)
+
+        new = old.copy()
+        new.update(data)
 
         await self.middleware.call(
             "datastore.update",
@@ -130,7 +131,7 @@ class FCHostService(CRUDService):
             # perform the check if the value is actually being changed.
             node = None
             for key in ['alias', 'wwpn', 'wwpn_b']:
-                if data[key] is not None:
+                if data.get(key) is not None:
                     await self._ensure_unique(verrors, schema_name, key, data[key], id_)
 
             if wwpn is not None:
@@ -167,7 +168,7 @@ class FCHostService(CRUDService):
                         )
         else:
             for key in ['alias', 'wwpn']:
-                if data[key] is not None:
+                if data.get(key) is not None:
                     await self._ensure_unique(verrors, schema_name, key, data[key], id_)
             if wwpn_b is not None:
                 verrors.add(
@@ -222,15 +223,21 @@ class FCHostService(CRUDService):
                                 f'Invalid npiv ({npiv}) supplied, max value {max_npiv_vports}'
                             )
                 if usage_check:
-                    vpfilter = [['port', '~', f'^{data["alias"]}/[1-9][0-9]*$']]
-                    vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
-                    for chan in vports:
-                        if chan > npiv:
-                            verrors.add(
-                                f'{schema_name}.npiv',
-                                f'Invalid npiv ({npiv}) supplied, {data["alias"]}/{chan} is currently mapped to a target'
-                            )
-                            break
+                    alias = data.get('alias')
+                    if not alias and old:
+                        alias = old.get('alias')
+                    if alias:
+                        vpfilter = [['port', '~', f'^{alias}/[1-9][0-9]*$']]
+                        vports = [int(p['port'].split('/')[-1]) for p in await self.middleware.call('fcport.query', vpfilter, {'select': ['port']})]
+                        for chan in vports:
+                            if chan > npiv:
+                                verrors.add(
+                                    f'{schema_name}.npiv',
+                                    f'Invalid npiv ({npiv}) supplied, {alias}/{chan} is currently mapped to a target'
+                                )
+                                break
+                    else:
+                        self.logger.warning('Cannot not check NPIV usage: %r', id_)
 
         verrors.check()
 
