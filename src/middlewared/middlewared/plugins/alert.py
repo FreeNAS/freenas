@@ -249,6 +249,7 @@ class AlertService(Service):
 
     @private
     async def initialize(self, load=True):
+        self.logger.info("Alert initiatlize starting: %r", load)
         is_enterprise = await self.middleware.call("system.is_enterprise")
 
         self.node = "A"
@@ -258,6 +259,7 @@ class AlertService(Service):
 
         self.alerts = []
         if load:
+            self.logger.info("Loading alerts")
             alerts_uuids = set()
             alerts_by_classes = defaultdict(list)
             for alert in await self.middleware.call("datastore.query", "system.alert"):
@@ -289,8 +291,11 @@ class AlertService(Service):
                     alerts = await alerts[0].klass.load(alerts)
 
                 self.alerts.extend(alerts)
+            self.logger.info("Loaded alerts")
         else:
+            self.logger.info("Flushing alerts")
             await self.flush_alerts()
+            self.logger.info("Flushed alerts")
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
@@ -302,6 +307,7 @@ class AlertService(Service):
         }
         for policy in self.policies.values():
             policy.receive_alerts(utc_now(), self.alerts)
+        self.logger.info("Initialize done")
 
     @private
     async def terminate(self):
