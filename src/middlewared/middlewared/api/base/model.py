@@ -13,7 +13,7 @@ from middlewared.utils.lang import undefined
 
 
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item",
-           "single_argument_args", "single_argument_result"]
+           "single_argument_args", "single_argument_result", "NotRequired", "NotRequiredModel"]
 
 
 class BaseModel(PydanticBaseModel):
@@ -51,7 +51,7 @@ class BaseModel(PydanticBaseModel):
         exclude_none: bool = False,
         round_trip: bool = False,
         warnings: bool | typing.Literal['none', 'warn', 'error'] = True,
-        serialize_as_any: bool = False,
+        serialize_as_any: bool = True,  # so that nested models set to `NotRequired` do not serialize
     ) -> dict[str, typing.Any]:
         return self.__pydantic_serializer__.to_python(
             self,
@@ -142,6 +142,24 @@ class _ForUpdateSerializerMixin(PydanticBaseModel):
                 else v != undefined
             )
         }
+
+
+class NotRequiredModel(BaseModel):
+    @model_serializer(mode="wrap")
+    def serialize_basemodel(self, serializer):
+        def remove_undefined(d):
+            if isinstance(d, dict):
+                return {
+                    k: remove_undefined(v)
+                    for k, v in d.items()
+                    if v is not undefined
+                }
+            return d
+
+        return remove_undefined(serializer(self))
+
+NotRequired = undefined
+"""Use as the default value for fields that may be excluded from the model."""
 
 
 def _field_for_update(field):
