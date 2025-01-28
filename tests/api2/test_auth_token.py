@@ -5,9 +5,11 @@ import pytest
 import requests
 
 from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.shell import assert_shell_works
+from middlewared.service_exception import CallError
 
 
 @pytest.fixture(scope="module")
@@ -111,3 +113,13 @@ def test_single_use_token():
     with client(auth=None) as c:
         assert c.call("auth.login_with_token", token)
         assert not c.call("auth.login_with_token", token)
+
+
+def test_token_job_validation():
+    with pytest.raises(CallError, match='job does not exist'):
+        call("auth.generate_token", 300, {'job': -1})
+
+    with unprivileged_user_client(roles=['READONLY_ADMIN']) as c:
+        job_id = call("smb.synchronize_passdb")
+        with pytest.raises(CallError, match='Job is not owned by current session'):
+            c.call("auth.generate_token", 300, {'job': job_id})
