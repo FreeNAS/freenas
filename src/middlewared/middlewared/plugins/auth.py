@@ -370,7 +370,7 @@ class AuthService(Service):
                 raise CallError(f'{job_id}: job does not exist.')
 
             job = self.middleware.jobs[job_id]
-            if error := job.credential_access_error(app.authenticated_credential, None)
+            if error := job.credential_access_error(app.authenticated_credential, None):
                 raise CallError(f'{job_id}: {error}')
 
         token = self.token_manager.create(
